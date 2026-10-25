@@ -224,7 +224,20 @@ void updateImGui() {
 					ImGui::BeginDisabled();
 				ImGui::Indent();
 				ImGui::Checkbox("Force Enable Vibrant Visuals", Options::forceEnableVibrantVisuals.ptr());
-				// ImGui::Checkbox("Disable RTX (Restart Required)", Options::disableRendererContextD3D12RTX.ptr());
+				if (!gDeferredParams)
+    ImGui::BeginDisabled();
+
+if (ImGui::Button("Deferred Graphics")) {
+    showDeferGUI = true;
+}
+
+if (!gDeferredParams)
+    ImGui::EndDisabled();
+
+if (ImGui::IsItemHovered())
+    ImGui::SetTooltip(
+        "Opens deferred shading parameters; does not change renderer mode.");
+				ImGui::Checkbox("Disable RTX (Restart Required)", Options::disableRendererContextD3D12RTX.ptr());
 				ImGui::Unindent();
 				if (!Options::vanilla2DeferredAvailable)
 					ImGui::EndDisabled();
