@@ -2,47 +2,37 @@ name: Build
 
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    name: Build Windows x64 DLL
+    runs-on: windows-2025
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup xmake
-        uses: xmake-io/github-action-setup-xmake@v1
+        uses: xmake-io/github-action-setup-xmake@3a1a5dddfc7fa625d9a698738334bf55655a861a # v1
+        with:
+          xmake-version: latest
 
-      - name: Build for Windows (DLL)
+      - name: Build DLL
+        shell: pwsh
         run: |
           xmake f -p windows -m release -v -y
-          xmake
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Upload DLL
-        uses: actions/upload-artifact@v4
+          xmake
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload Windows DLL
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: windows
           path: build/windows/x64/release/*.dll
-          
-  build-android:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup xmake
-        uses: xmake-io/github-action-setup-xmake@v1
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Build for Android (SO)
-        run: |
-          xmake f -p android -a arm64-v8a -m release -v -y
-          xmake
-
-      - name: Upload SO
-        uses: actions/upload-artifact@v4
-        with:
-          name: android
-          path: build/android/arm64-v8a/release/*.so
+          if-no-files-found: error
