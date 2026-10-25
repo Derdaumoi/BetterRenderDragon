@@ -2,7 +2,10 @@
 #include "imgui.h"
 #include "mc/client/dragon/framerenderer/DeferredShadingParameters.h"
 
-static const char *DirectionalShadowsModeNames[] = {"Off", "Cascade", "Evsm"};
+static const char *DirectionalShadowsModeNames[] = {
+    "Off",
+    "Cascade"
+};
 
 template <typename T>
 bool ImGui_EnumCombo(const char *label, T *value, const char *const *items,

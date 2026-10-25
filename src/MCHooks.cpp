@@ -1,4 +1,4 @@
-
+#include <string_view>
 #include "Core/Math/Vec4.h"
 #include "mc/client/RenderDragon/Materials/MaterialResourceManager.h"
 #include "mc/client/Renderdragon/Materials/MaterialUniformName.h"
@@ -35,8 +35,13 @@ DeclareHook(readFile, std::string*, void *This, void *retstr,
   if (brd::Options::materialBinLoaderEnabled && brd::Options::redirectShaders &&
       resourcePackManager) {
     const std::string p = path->getUtf8CString();
-    if (p.find("data/renderer/materials/") != std::string::npos &&
-        strncmp(p.c_str() + p.size() - 13, ".material.bin", 13) == 0) {
+constexpr std::string_view materialSuffix = ".material.bin";
+
+if (p.find("data/renderer/materials/") != std::string::npos &&
+    p.size() >= materialSuffix.size() &&
+    p.compare(p.size() - materialSuffix.size(),
+              materialSuffix.size(), materialSuffix) == 0 &&
+    ResourcePackManager_load != nullptr) {
 
       std::string binPath =
           "renderer/materials/" + p.substr(p.find_last_of('/') + 1);
@@ -100,10 +105,15 @@ PFN_dragon_materials_BgfxFrameBuilder_reloadMaterial reloadMaterial = nullptr;
 // mce::framebuilder::BgfxFrameBuilder::endFrame
 DeclareHook(mce_framebuilder_BgfxFrameBuilder_endFrame, void, uintptr_t This,
             uintptr_t frameBuilderContext) {
-  if (brd::Options::reloadShadersAvailable && brd::Options::reloadShaders) {
-    brd::Options::reloadShaders = false;
-    reloadMaterial(This);
-  }
+if (brd::Options::reloadShadersAvailable &&
+    brd::Options::reloadShaders.exchange(false)) {
+    if (reloadMaterial != nullptr) {
+        reloadMaterial(This);
+        Logger::log("Reload shaders: reloadMaterial called");
+    } else {
+        Logger::log("Reload shaders failed: reloadMaterial not found");
+    }
+}
   original(This, frameBuilderContext);
 }
 
@@ -149,7 +159,7 @@ void initMCHooks() {
           // 1.21.130
           "C6 81 ? ? ? ? ? C3 CC CC CC CC CC CC CC CC 48 83 EC 28 48 8B 41 "
           "? 4C 8D 05 ? ? ? ? 48 8D 15 ? ? ? ? 48 8D 4C 24 ? 4C 8B 48 ? 49 "
-          "81 C1 08 03 00 00 E8 ? ? ? ? B8 01 00 00 00 48 83 C4 28 C3", );
+          "81 C1 08 03 00 00 E8 ? ? ? ? B8 01 00 00 00 48 83 C4 28 C3");
   if (!reloadMaterial) {
     Logger::log("reloadMaterial not found");
   }
